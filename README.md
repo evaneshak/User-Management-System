@@ -1,4 +1,5 @@
 # Userspace — User Management System
+This is a edit for the git demo
 
 A class project implementing all 10 required database functions with Apache-served vanilla HTML/CSS/JS, an Express API, and MySQL/MariaDB. `userid` means the `Users.username` primary key. The API validates credentials but does **not** establish a persistent authenticated session or protected account area.
 
