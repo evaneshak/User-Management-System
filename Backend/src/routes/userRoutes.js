@@ -1,0 +1,12 @@
+const router = require('express').Router();
+const c = require('../controllers/userController');
+router.post('/register', c.register);
+router.get('/search/names', c.names);
+router.get('/search/userid', c.byUserid);
+router.get('/search/salary', c.salaries);
+router.get('/search/age', c.ages);
+router.get('/search/after', c.reference('after'));
+router.get('/search/never', c.never);
+router.get('/search/same-day', c.reference('same-day'));
+router.get('/search/today', c.today);
+module.exports = router;

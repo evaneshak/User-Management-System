@@ -1,0 +1,32 @@
+# 01 — Setup and run with XAMPP
+
+Start with the finished `user-management-project` folder open in VS Code. Keep its internal folder names unchanged. You need XAMPP with Apache + MySQL/MariaDB, Node.js 20 or newer with npm, VS Code, and a browser. The professor's sample is reference material; this is your own project.
+
+## First setup, in exact order
+
+1. **Put the folder in Apache's document root.** On Windows, copy the whole folder to `C:\xampp\htdocs\user-management-project` (adjust if XAMPP was installed elsewhere). On macOS XAMPP, the usual path is `/Applications/XAMPP/xamppfiles/htdocs/user-management-project`; some installations use `/Applications/XAMPP/htdocs`. Locate the folder containing XAMPP's `index.php` if unsure. Open *that copied folder* in VS Code. If you cannot copy because of permissions on macOS, use Finder with administrator authentication; keep your original as backup.
+2. **Start services.** Open the XAMPP Control Panel (Windows) or XAMPP Manager (macOS). Start **MySQL** first, then **Apache**. They should show Running/green. Leave XAMPP open.
+3. **Open phpMyAdmin.** Browse to <http://localhost/phpmyadmin/>. If Apache uses another port, use that port in this URL and in the frontend URL. Select the **SQL** tab. Open `database/schema.sql` in VS Code, copy its entire contents, paste into phpMyAdmin SQL, and click **Go**. This creates `web_app` and `Users` without deleting existing rows. You can also create `web_app` first via phpMyAdmin **New → database name `web_app` → Create**, then run `schema.sql`.
+4. **Create the backend configuration.** In VS Code, copy `Backend/.env.example` to `Backend/.env` and edit it. Windows PowerShell from the project root: `Copy-Item Backend\.env.example Backend\.env`. macOS/Linux terminal: `cp Backend/.env.example Backend/.env`. Use these values for default XAMPP: `PORT=5050`, `DB_HOST=localhost`, `DB_PORT=3306`, `DB_USER=root`, `DB_PASSWORD=` (blank), `DB_NAME=web_app`. If your local XAMPP MySQL root account has a password, enter it after `DB_PASSWORD=`. If MySQL runs on another port, change `DB_PORT`. `Backend/.env` is ignored by Git; never upload it.
+5. **Open the VS Code terminal.** Use **Terminal → New Terminal**. Check Node/npm: `node --version` and `npm --version`. Then enter the backend directory. Windows PowerShell: `cd .\Backend`. macOS/Linux: `cd Backend`.
+6. **Install dependencies.** Run `npm install`. Expected success: npm exits without errors and creates `Backend/node_modules` using the committed `package-lock.json`. Warnings about funding/audit are separate from installation success.
+7. **Seed a fresh dedicated demo database (recommended).** Do this only when `web_app.Users` does not already contain `john`, `maya`, `nina`, `omar`, `liam`, or `zoe`, and only for a demo database. In PowerShell, while in `Backend`: `$env:CONFIRM_DEMO_SEED="YES"; npm run seed; Remove-Item Env:CONFIRM_DEMO_SEED`. On macOS/Linux: `CONFIRM_DEMO_SEED=YES npm run seed`. Expected output: `Inserted 6 demo users. Password for all: DemoPass123!`. The seed refuses existing demo usernames and never changes their sign-in times. Running it twice results in an intentional stop; do not drop real records merely to reseed.
+8. **Start the API.** Still in `Backend`, run `npm start`. Expected terminal line: `API listening at http://localhost:5050`. **Keep this terminal open** while demonstrating the app. The start line confirms the listener, not database connectivity.
+9. **Check the database connection.** Open <http://localhost:5050/api/health>. Expected JSON: `{"api":"ok","database":"ok"}`. If it says `database":"unavailable"`, fix MySQL or `.env` before continuing.
+10. **Open the frontend.** Browse to <http://localhost/user-management-project/Frontend/index.html>. The sidebar status should say `API + database ok`. Search mode 04 for `john`; it should show John Carter. Search mode 09 for `john`; it should show john and maya. Mode 10 should show liam and zoe if you seeded today according to the MySQL server date. Use password `DemoPass123!` on the sign-in page only for the demo.
+
+## Next time and shutdown
+
+Next time, start XAMPP MySQL + Apache, open VS Code terminal in `Backend`, run `npm start`, check health, then open the frontend URL. You only need `npm install` again after dependency changes. You do **not** reseed. To shut down, press **Ctrl+C** in the API terminal, then stop Apache and MySQL in XAMPP. Closing the browser does not stop either server.
+
+## If something fails
+
+- **`npm` not found:** install Node.js, restart VS Code, and verify `node --version`. Use a new terminal after installation.
+- **MySQL port conflict:** inspect XAMPP MySQL settings/logs. If it uses 3307, set `DB_PORT=3307`, restart `npm start`, and confirm phpMyAdmin is connected to the same instance.
+- **Unknown database / `database":"unavailable"`:** verify `web_app` exists and `schema.sql` ran. Compare all `DB_` values in `.env` with XAMPP. The API hides DB credentials in its error response; the terminal may show an error code.
+- **Access denied:** verify `DB_USER`, `DB_PASSWORD`, and MySQL permissions. Default XAMPP often uses root with blank password, but local setups vary. Do not put real passwords in README, screenshots, or Git.
+- **Frontend 404:** verify the project is immediately below the actual Apache `htdocs`, with `Frontend/index.html` inside; check Apache's actual port. Do not use the VS Code file path as the web URL.
+- **Failed to fetch / CORS:** confirm the backend terminal remains open, health URL loads, and `Frontend/js/config.js` points to `http://localhost:5050/api`. Serve via localhost Apache, not `file://` or a remote hostname. If Apache uses a different local port, the CORS policy already allows local ports.
+- **Port 5050 in use:** close the other server or set `PORT=5051` in `.env` **and** `apiBase: 'http://localhost:5051/api'` in `Frontend/js/config.js`; restart the backend and refresh the browser. Windows PowerShell inspection: `netstat -ano | findstr :5050`; macOS: `lsof -i :5050`.
+- **XAMPP htdocs differs:** in XAMPP Apache config, find `DocumentRoot`. Put the project there and preserve `/user-management-project/Frontend/index.html` in the URL.
+- **Date surprises:** `CURDATE()` uses the MySQL server session timezone. If seeding near midnight, verify the database date with `SELECT CURDATE();` in phpMyAdmin. The seed's relative dates are fixed at insertion time.
